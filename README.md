@@ -98,12 +98,6 @@ app/src/main/java/com/uidai/livenessdetection/
 5. If prompted, blink twice naturally
 6. View the verification result
 
-## Requirements
-
-- Model size: ≤ 6MB
-- Latency: ≤ 1.5 seconds
-- APCER: ≤ 0.10%
-- BPCER: ≤ 0.10%
 
 ## License
 
