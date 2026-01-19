@@ -1,116 +1,155 @@
 # Face Liveness Detection - Android Application
 
-A hybrid two-stage face liveness detection system for Android that detects whether a face presented to the camera is a live person or a spoofing attempt.
+A real-time face liveness detection Android app using **MiniFASNet ONNX models** and **ML Kit** for face detection. The app determines whether a face presented to the camera is a **REAL** person or a **FAKE** (spoofing attempt - photo, video, or screen).
 
-## Features
+## 🚀 Features
 
-- **Passive Detection**: Silent analysis using CNN + Traditional CV methods
-- **Active Detection**: Blink-based verification for uncertain cases
-- **Multi-Attack Detection**: Detects photos, videos, screens, masks, and deepfakes
-- **Real-time Processing**: Fast inference with TensorFlow Lite
-- **Modern UI**: Built with Jetpack Compose
+- **MiniFASNet ONNX Models**: Uses pre-trained Silent-Face-Anti-Spoofing MiniFASNet models
+- **Multi-Model Fusion**: Combines predictions from multiple scales (2.7x and 4.0x) for robust detection
+- **ML Kit Face Detection**: Fast and accurate face detection using Google's ML Kit
+- **Real-time Processing**: Efficient ONNX Runtime inference on mobile
+- **Modern UI**: Built with Jetpack Compose and Material3
+- **Binary Output**: Clean REAL/FAKE classification with confidence scores
 
-## Architecture
+## 🧠 Model Architecture
+
+The app uses **MiniFASNet** (Mini Face Anti-Spoofing Network) - a lightweight CNN designed for mobile deployment.
+
+### Models Used
+
+| Model File | Scale | Architecture |
+|------------|-------|--------------|
+| `2.7_80x80_MiniFASNetV2.onnx` | 2.7x | MiniFASNet V2 |
+| `4_0_0_80x80_MiniFASNetV1SE.onnx` | 4.0x | MiniFASNet V1 with SE blocks |
+
+### Detection Pipeline
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                 PASSIVE DETECTION                    │
-├─────────────────────────────────────────────────────┤
-│  CNN (35%)  │  LBP (15%)  │  Motion (15%)  │  ...  │
-└─────────────────────────────────────────────────────┘
-                         ↓
-              [Score >= 0.85] → PASS
-              [Score <= 0.55] → FAIL
-              [Uncertain] → Active Detection
-                         ↓
-┌─────────────────────────────────────────────────────┐
-│                 ACTIVE DETECTION                     │
-│              Blink Detection (2 blinks)             │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     ML Kit Face Detection                    │
+│              (Detects face bounding box)                     │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  Face Box Expansion                          │
+│       (Scale 2.7x and 4.0x for different contexts)          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│              MiniFASNet ONNX Inference                       │
+│     Input: 80x80 BGR image → Output: [paper, real, screen]  │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Multi-Model Score Fusion                      │
+│         Average softmax scores across all models            │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+                    REAL or FAKE + Confidence
 ```
 
-## Setup
+### Classification Labels
+
+| Label Index | Class | Result |
+|-------------|-------|--------|
+| 0 | Paper Attack | FAKE |
+| 1 | Real Face | REAL |
+| 2 | Screen/Video Attack | FAKE |
+
+## 📁 Project Structure
+
+```
+app/src/main/
+├── assets/
+│   ├── 2.7_80x80_MiniFASNetV2.onnx      # MiniFASNet V2 model
+│   ├── 4_0_0_80x80_MiniFASNetV1SE.onnx  # MiniFASNet V1-SE model
+│   └── silent_face_model.tflite         # Alternative TFLite model
+├── java/com/uidai/livenessdetection/
+│   ├── domain/
+│   │   ├── models/
+│   │   │   ├── LivenessResult.kt
+│   │   │   └── FaceData.kt
+│   │   └── LivenessDetector.kt
+│   ├── ml/
+│   │   ├── OnnxLivenessDetector.kt      # ONNX inference engine
+│   │   ├── CNNInference.kt
+│   │   ├── BlinkDetector.kt
+│   │   ├── MotionAnalyzer.kt
+│   │   ├── TraditionalCVAnalyzer.kt
+│   │   └── FusionScorer.kt
+│   └── ui/
+│       ├── MainActivity.kt
+│       ├── LivenessViewModel.kt
+│       ├── CameraPreview.kt
+│       ├── LivenessDetectionScreen.kt
+│       └── theme/Theme.kt
+└── res/
+    └── ...
+```
+
+## 🛠️ Setup
 
 ### Prerequisites
-- Android Studio Arctic Fox or later
-- Android SDK 26+ (Android 8.0)
-- Kotlin 1.9.20
+- Android Studio Hedgehog (2023.1.1) or later
+- Android SDK 24+ (Android 7.0)
+- Kotlin 1.9.20+
 
 ### Installation
 
-1. Clone/Copy the project to your workspace
-2. Open in Android Studio
-3. **Important**: Add the TFLite model to `app/src/main/assets/`:
-   - Download Silent-Face-Anti-Spoofing model
-   - Convert to TFLite format
-   - Name it `silent_face_model.tflite`
-4. Sync Gradle and build
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/viswarup/sitaa-face-liveliness.git
+   ```
+
+2. Open the project in Android Studio
+
+3. Sync Gradle and wait for dependencies to download
+
+4. Connect an Android device or start an emulator
+
+5. Run the app
 
 ### Dependencies
 
-- **Jetpack Compose**: Modern UI toolkit
-- **CameraX**: Camera handling
-- **ML Kit**: Face detection and face mesh
-- **TensorFlow Lite**: CNN inference
-- **OpenCV**: Traditional CV algorithms
+- **ONNX Runtime**: `com.microsoft.onnxruntime:onnxruntime-android:1.16.3`
+- **ML Kit Face Detection**: `com.google.mlkit:face-detection:16.1.6`
+- **CameraX**: For camera feed handling
+- **Jetpack Compose**: Modern declarative UI
 
-## Project Structure
-
-```
-app/src/main/java/com/uidai/livenessdetection/
-├── domain/
-│   ├── models/
-│   │   ├── LivenessResult.kt    # Data models
-│   │   └── FaceData.kt
-│   └── LivenessDetector.kt      # Main orchestrator
-├── ml/
-│   ├── CNNInference.kt          # TFLite inference
-│   ├── TraditionalCVAnalyzer.kt # LBP, Fourier, Color, Texture
-│   ├── MotionAnalyzer.kt        # Optical flow
-│   ├── BlinkDetector.kt         # EAR-based blink detection
-│   └── FusionScorer.kt          # Score aggregation
-└── ui/
-    ├── MainActivity.kt
-    ├── LivenessViewModel.kt
-    ├── CameraPreview.kt
-    ├── LivenessDetectionScreen.kt
-    └── theme/Theme.kt
-```
-
-## Detection Methods
-
-| Method | Weight | Detects |
-|--------|--------|---------|
-| CNN (Silent-Face) | 35% | All attack types |
-| LBP Texture | 15% | Printed photos |
-| Motion Analysis | 15% | Video replays |
-| Frequency Analysis | 10% | Screen moiré |
-| Color Analysis | 10% | Mask materials |
-| Texture Analysis | 10% | Print/screen artifacts |
-| Depth Analysis | 5% | 2D attacks |
-
-## Usage
+## 📖 Usage
 
 1. Launch the app
 2. Grant camera permission when prompted
-3. Position your face in the camera frame
-4. Hold steady during passive analysis (2-3 seconds)
-5. If prompted, blink twice naturally
-6. View the verification result
+3. Position your face within the camera frame
+4. The app will automatically detect your face and run liveness check
+5. View the result: **REAL** (live person) or **FAKE** (spoofing attempt)
 
-## Requirements
+## 🔬 Technical Details
 
-- Model size: ≤ 6MB
-- Latency: ≤ 1.5 seconds
-- APCER: ≤ 0.10%
-- BPCER: ≤ 0.10%
+### Preprocessing Steps
+1. **Face Detection**: ML Kit detects face bounding box
+2. **Box Expansion**: Expand bounding box by scale factor (2.7x or 4.0x)
+3. **Crop & Resize**: Extract face region and resize to 80x80 pixels
+4. **Channel Order**: Convert to BGR format (matching Python training)
+5. **CHW Format**: Reshape to [1, 3, 80, 80] tensor
 
-## License
+### Inference
+- ONNX Runtime executes MiniFASNet models
+- Output: 3-class softmax scores [paper, real, screen]
+- Multi-model fusion averages scores across all models
 
-This project is for educational purposes.
+## 📚 References
 
-## Acknowledgments
+- [Silent-Face-Anti-Spoofing](https://github.com/minivision-ai/Silent-Face-Anti-Spoofing) - Original MiniFASNet implementation
+- [ML Kit Face Detection](https://developers.google.com/ml-kit/vision/face-detection)
+- [ONNX Runtime](https://onnxruntime.ai/)
 
-- Silent-Face-Anti-Spoofing for the CNN architecture reference
-- Google ML Kit for face detection
-- OpenCV for traditional CV algorithms
+## 📄 License
+
+This project is for educational and research purposes.
+
+## 🙏 Acknowledgments
+
+- MiniVision AI for the Silent-Face-Anti-Spoofing and MiniFASNet models
+- Google ML Kit team for face detection
+- Microsoft for ONNX Runtime
