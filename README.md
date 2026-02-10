@@ -2,6 +2,8 @@
 
 A real-time face liveness detection Android app using **MiniFASNet ONNX models**, **ML Kit** for face detection, and **Traditional Computer Vision** techniques. The app determines whether a face presented to the camera is a **REAL** person or a **FAKE** (spoofing attempt - photo, video, or screen).
 
+[Download the application by clicking on the following link :] (https://drive.google.com/file/d/1JI7X7lZwBudhiNsFWcGjjn7SIuXRvP9A/view?usp=sharing)
+
 ## 🚀 Features
 
 - **MiniFASNet ONNX Models**: Uses pre-trained Silent-Face-Anti-Spoofing MiniFASNet models
